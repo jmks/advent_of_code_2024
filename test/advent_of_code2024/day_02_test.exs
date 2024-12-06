@@ -21,5 +21,14 @@ defmodule AdventOfCode2024.Day02Test do
       refute safe_report?([8, 6, 4, 4, 1])
       assert safe_report?([1, 3, 6, 7, 9])
     end
+
+    test "examples with problem dampener" do
+      assert safe_report?([7, 6, 4, 2, 1], :dampened)
+      refute safe_report?([1, 2, 7, 8, 9], :dampened)
+      refute safe_report?([9, 7, 6, 2, 1], :dampened)
+      assert safe_report?([1, 3, 2, 4, 5], :dampened)
+      assert safe_report?([8, 6, 4, 4, 1], :dampened)
+      assert safe_report?([1, 3, 6, 7, 9], :dampened)
+    end
   end
 end
