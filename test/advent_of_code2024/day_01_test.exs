@@ -17,4 +17,10 @@ defmodule AdventOfCode2024.Day01Test do
       assert smallwise_pair_difference(@example) == 11
     end
   end
+
+  describe "similarity_score/1" do
+    test "example" do
+      assert similarity_score(@example) == 31
+    end
+  end
 end
