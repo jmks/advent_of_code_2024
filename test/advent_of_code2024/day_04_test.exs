@@ -44,4 +44,10 @@ defmodule AdventOfCode2024.Day04Test do
       assert search(@example) == 18
     end
   end
+
+  describe "x_mas_search/1" do
+    test "example" do
+      assert x_mas_search(@example) == 9
+    end
+  end
 end

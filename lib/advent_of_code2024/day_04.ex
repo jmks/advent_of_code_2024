@@ -41,6 +41,35 @@ defmodule AdventOfCode2024.Day04 do
     .X.X.XMASX
 
     Take a look at the little Elf's word search. How many times does XMAS appear?
+
+    --- Part Two ---
+
+    The Elf looks quizzically at you. Did you misunderstand the assignment?
+
+    Looking for the instructions, you flip over the word search to find that this isn't actually an XMAS puzzle; it's an X-MAS puzzle in which you're supposed to find two MAS in the shape of an X. One way to achieve that is like this:
+
+    M.S
+    .A.
+    M.S
+
+    Irrelevant characters have again been replaced with . in the above diagram. Within the X, each MAS can be written forwards or backwards.
+
+    Here's the same example from before, but this time all of the X-MASes have been kept instead:
+
+    .M.S......
+    ..A..MSMS.
+    .M.S.MAA..
+    ..A.ASMSM.
+    .M.S.M....
+    ..........
+    S.S.S.S.S.
+    .A.A.A.A..
+    M.M.M.M.M.
+    ..........
+
+    In this example, an X-MAS appears 9 times.
+
+    Flip the word search from the instructions back over to the word search side and try again. How many times does an X-MAS appear?
   """
   # Brunte force.
   # Graph seach? Find paths X -> M -> A -> S
@@ -48,6 +77,19 @@ defmodule AdventOfCode2024.Day04 do
     horizontal(word_search) +
       vertical(word_search) +
       diagonal(word_search)
+  end
+
+  # Find MAS in an X pattern:
+  #
+  # M.S  S.S  S.M  M.M
+  # .A.  .A.  .A.  .A.
+  # M.S  M.M  S.M  S.S
+  def x_mas_search(word_search) do
+    {targets, grid} = build_grid(word_search)
+
+    targets
+    |> Enum.filter(&x_mas?(&1, grid))
+    |> length()
   end
 
   defp horizontal(word_search) do
@@ -110,11 +152,59 @@ defmodule AdventOfCode2024.Day04 do
     end)
   end
 
+  defp build_grid(word_search) do
+    coordinates =
+      word_search
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {row, r} ->
+        row
+        |> String.codepoints()
+        |> Enum.with_index()
+        |> Enum.map(fn {letter, c} ->
+          {{r, c}, letter}
+        end)
+      end)
+
+    targets =
+      Enum.filter(coordinates, fn
+        {_, "A"} -> true
+        _ -> false
+      end)
+
+    {targets, Map.new(coordinates)}
+  end
+
+  defp x_mas?({{row, col}, _}, grid) do
+    out_of_bounds = "OOB"
+
+    {row, col}
+    |> x_pattern()
+    |> Enum.map(fn coordinate ->
+      Map.get(grid, coordinate, out_of_bounds)
+    end)
+    |> Enum.join("")
+    |> then(fn value ->
+      # same order as x_pattern()
+      value in ["MSMS", "SSMM", "SMSM", "MMSS"]
+    end)
+  end
+
+  defp x_pattern({row, col}) do
+    [
+      {row - 1, col - 1},
+      {row - 1, col + 1},
+      {row + 1, col - 1},
+      {row + 1, col + 1}
+    ]
+  end
+
   def part1 do
     Inputs.lines(4, :binary)
     |> search()
   end
 
   def part2 do
+    Inputs.lines(4, :binary)
+    |> x_mas_search()
   end
 end
