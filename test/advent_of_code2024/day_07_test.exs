@@ -44,6 +44,14 @@ defmodule AdventOfCode2024.Day07Test do
       refute possible?({21037, [9, 7, 18, 13]})
       assert possible?({292, [11, 6, 16, 20]})
     end
+
+    test "with concat" do
+      operators = [:add, :mul, :cat]
+
+      assert possible?({156, [15, 6]}, operators)
+      assert possible?({7290, [6, 8, 6, 15]}, operators)
+      assert possible?({192, [17, 8, 14]}, operators)
+    end
   end
 
   test "intersperse/2" do

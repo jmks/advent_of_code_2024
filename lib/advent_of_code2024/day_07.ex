@@ -33,6 +33,23 @@ defmodule AdventOfCode2024.Day07 do
   The engineers just need the total calibration result, which is the sum of the test values from just the equations that could possibly be true. In the above example, the sum of the test values for the three equations listed above is 3749.
 
   Determine which equations could possibly be true. What is their total calibration result?
+
+  --- Part Two ---
+
+  The engineers seem concerned; the total calibration result you gave them is nowhere close to being within safety tolerances. Just then, you spot your mistake: some well-hidden elephants are holding a third type of operator.
+
+  The concatenation operator (||) combines the digits from its left and right inputs into a single number. For example, 12 || 345 would become 12345. All operators are still evaluated left-to-right.
+
+  Now, apart from the three equations that could be made true using only addition and multiplication, the above example has three more equations that can be made true by inserting operators:
+
+      156: 15 6 can be made true through a single concatenation: 15 || 6 = 156.
+      7290: 6 8 6 15 can be made true using 6 * 8 || 6 * 15.
+      192: 17 8 14 can be made true using 17 || 8 + 14.
+
+  Adding up all six test values (the three that could be made before using only + and * plus the new three that can now be made by also using ||) produces the new total calibration result of 11387.
+
+  Using your new knowledge of elephant hiding spots, determine which equations could possibly be true. What is their total calibration result?
+
   """
   def part1 do
     Inputs.lines(7, :binary)
@@ -43,6 +60,11 @@ defmodule AdventOfCode2024.Day07 do
   end
 
   def part2 do
+    Inputs.lines(7, :binary)
+    |> parse()
+    |> Enum.filter(&possible?(&1, [:add, :mul, :cat]))
+    |> Enum.map(&elem(&1, 0))
+    |> Enum.sum()
   end
 
   def parse(input) do
@@ -58,10 +80,10 @@ defmodule AdventOfCode2024.Day07 do
     end)
   end
 
-  def possible?({test_value, numbers}) do
-    operators = length(numbers) - 1
+  def possible?({test_value, numbers}, operators \\ [:add, :mul]) do
+    total_operators = length(numbers) - 1
 
-    permutations([:add, :mul], operators)
+    permutations(operators, total_operators)
     |> Enum.any?(fn ops ->
       eval_equation(intersperse(numbers, ops)) == test_value
     end)
@@ -84,6 +106,12 @@ defmodule AdventOfCode2024.Day07 do
   end
 
   def eval_equation([value]), do: value
+
+  def eval_equation([left, :cat, right | rest]) do
+    value = [left, right] |> Enum.join("") |> String.to_integer()
+
+    eval_equation([value | rest])
+  end
 
   def eval_equation([left, :add, right | rest]) do
     eval_equation([left + right | rest])
