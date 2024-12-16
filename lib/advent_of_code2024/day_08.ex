@@ -80,6 +80,46 @@ defmodule AdventOfCode2024.Day08 do
   Because the topmost A-frequency antenna overlaps with a 0-frequency antinode, there are 14 total unique locations that contain an antinode within the bounds of the map.
 
   Calculate the impact of the signal. How many unique locations within the bounds of the map contain an antinode?
+
+  --- Part Two ---
+
+  Watching over your shoulder as you work, one of The Historians asks if you took the effects of resonant harmonics into your calculations.
+
+  Whoops!
+
+  After updating your model, it turns out that an antinode occurs at any grid position exactly in line with at least two antennas of the same frequency, regardless of distance. This means that some of the new antinodes will occur at the position of each antenna (unless that antenna is the only one of its frequency).
+
+  So, these three T-frequency antennas now create many antinodes:
+
+  T....#....
+  ...T......
+  .T....#...
+  .........#
+  ..#.......
+  ..........
+  ...#......
+  ..........
+  ....#.....
+  ..........
+
+  In fact, the three T-frequency antennas are all exactly in line with two antennas, so they are all also antinodes! This brings the total number of antinodes in the above example to 9.
+
+  The original example now has 34 antinodes, including the antinodes that appear on every antenna:
+
+  ##....#....#
+  .#.#....0...
+  ..#.#0....#.
+  ..##...0....
+  ....0....#..
+  .#...#A....#
+  ...#..#.....
+  #....#.#....
+  ..#.....A...
+  ....#....A..
+  .#........#.
+  ...#......##
+
+  Calculate the impact of the signal using this updated model. How many unique locations within the bounds of the map contain an antinode?
   """
 
   def part1 do
@@ -90,20 +130,47 @@ defmodule AdventOfCode2024.Day08 do
   end
 
   def part2 do
+    Inputs.lines(8, :binary)
+    |> parse()
+    |> unique_locations_with_antinodes(&antinodes_with_harmonics/4)
+    |> length()
   end
 
   def parse(map) do
     AdventOfCode2024.Parsers.Tiles.parse(map, & &1)
   end
 
-  def antinodes({x1, y1}, {x2, y2}) do
+  def antinodes({x1, y1}, {x2, y2}, x_range, y_range) do
     rise = y2 - y1
     run = x2 - x1
 
     [{x1 - run, y1 - rise}, {x2 + run, y2 + rise}]
+    |> Enum.filter(fn {x, y} -> x in x_range and y in y_range end)
   end
 
-  def unique_locations_with_antinodes(tiles) do
+  def antinodes_with_harmonics({x1, y1}, {x2, y2}, x_range, y_range) do
+    rise = y2 - y1
+    run = x2 - x1
+
+    travel_along({x1, y1}, {run, rise}, :sub, x_range, y_range, []) ++
+      travel_along({x2, y2}, {run, rise}, :add, x_range, y_range, [])
+  end
+
+  defp travel_along({x, y}, {run, rise}, op, x_range, y_range, acc) do
+    if x in x_range and y in y_range do
+      new_point =
+        case op do
+          :sub -> {x - run, y - rise}
+          :add -> {x + run, y + rise}
+        end
+
+      travel_along(new_point, {run, rise}, op, x_range, y_range, [{x, y} | acc])
+    else
+      Enum.sort(acc, :asc)
+    end
+  end
+
+  def unique_locations_with_antinodes(tiles, antinode_fun \\ &antinodes/4) do
     {x_min, x_max} = tiles |> Enum.map(fn {{x, _}, _} -> x end) |> Enum.min_max()
     {y_min, y_max} = tiles |> Enum.map(fn {{_, y}, _} -> y end) |> Enum.min_max()
 
@@ -118,10 +185,7 @@ defmodule AdventOfCode2024.Day08 do
       Map.fetch!(node_groups, node)
       |> pairwise()
       |> Enum.map(fn {{left, _}, {right, _}} ->
-        antinodes(left, right)
-        |> Enum.filter(fn {x, y} ->
-          x_min <= x and x <= x_max and y_min <= y and y <= y_max
-        end)
+        antinode_fun.(left, right, x_min..x_max, y_min..y_max)
       end)
     end)
     |> List.flatten()
