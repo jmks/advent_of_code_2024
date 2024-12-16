@@ -207,16 +207,7 @@ defmodule AdventOfCode2024.Day06 do
   end
 
   def parse(map) do
-    map
-    |> Enum.with_index()
-    |> Enum.flat_map(fn {line, row} ->
-      line
-      |> String.codepoints()
-      |> Enum.with_index()
-      |> Enum.map(fn {tile, column} ->
-        {{row, column}, tile_type(tile)}
-      end)
-    end)
+    AdventOfCode2024.Parsers.Tiles.parse(map, &tile_type/1)
   end
 
   def guard_visited(tiles) do
