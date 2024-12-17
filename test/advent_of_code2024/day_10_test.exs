@@ -61,6 +61,42 @@ defmodule AdventOfCode2024.Day10Test do
     end
   end
 
+  describe "rating/1" do
+    test "many distinct paths" do
+      topo =
+        """
+        012345
+        123456
+        234567
+        345678
+        406789
+        567890
+        """
+        |> map()
+        |> parse()
+
+      assert rating(topo) == 227
+    end
+
+    test "larger map, fewer distinct paths" do
+      topo =
+        """
+        89010123
+        78121874
+        87430965
+        96549874
+        45678903
+        32019012
+        01329801
+        10456732
+        """
+        |> map()
+        |> parse()
+
+      assert rating(topo) == 81
+    end
+  end
+
   defp map(str) do
     str |> String.trim() |> String.split("\n", trim: true)
   end
