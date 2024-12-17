@@ -57,37 +57,64 @@ defmodule AdventOfCode2024.Day11 do
 
   Consider the arrangement of stones in front of you. How many stones will you have after blinking 25 times?
 
+  --- Part Two ---
+
+  The Historians sure are taking a long time. To be fair, the infinite corridors are very large.
+
+  How many stones would you have after blinking a total of 75 times?
   """
   def part1 do
     Inputs.binary(11)
     |> String.split(" ", trim: true)
     |> Enum.map(&String.to_integer/1)
-    |> blinks(25)
-    |> length()
+    |> total_stones(25)
   end
 
   def part2 do
+    Inputs.binary(11)
+    |> String.split(" ", trim: true)
+    |> Enum.map(&String.to_integer/1)
+    |> total_stones(75)
   end
 
-  def blinks(stones, times) do
+  def total_stones(stones, times) do
     1..times
-    |> Enum.reduce(stones, fn _, stones ->
-      blink(stones)
+    |> Enum.reduce(Enum.frequencies(stones), fn _, freq ->
+      freq
+      |> Enum.map(fn {stone, count} ->
+        case step(stone) do
+          [one, two] ->
+            [{one, count}, {two, count}]
+
+          new_stone ->
+            {new_stone, count}
+        end
+      end)
+      |> List.flatten()
+      |> Enum.reduce(Map.new(), fn {stone, count}, map ->
+        Map.update(map, stone, count, &(&1 + count))
+      end)
     end)
+    |> Map.values()
+    |> Enum.sum()
   end
 
-  def blink([]), do: []
+  def blink(stones) do
+    stones |> Enum.map(&step/1) |> List.flatten()
+  end
 
-  def blink([0 | rest]), do: [1 | blink(rest)]
+  defp step(0), do: 1
 
-  def blink([stone | rest]) do
+  defp step(stone) do
     if even_digits?(stone) do
       digits = Integer.digits(stone)
-      {left, right} = Enum.split(digits, div(length(digits), 2))
 
-      [Integer.undigits(left), Integer.undigits(right) | blink(rest)]
+      digits
+      |> Enum.split(div(length(digits), 2))
+      |> Tuple.to_list()
+      |> Enum.map(&Integer.undigits/1)
     else
-      [stone * 2024 | blink(rest)]
+      stone * 2024
     end
   end
 
