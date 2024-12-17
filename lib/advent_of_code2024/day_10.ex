@@ -145,9 +145,14 @@ defmodule AdventOfCode2024.Day10 do
   end
 
   def trails(map, start) do
-    frontier = [{start, []}]
-
-    dfs(frontier, map, [])
+    AdventOfCode2024.Graphs.dfs(
+      map,
+      start,
+      fn value, _coordinate, _history, _neighbours -> value == 9 end,
+      fn neighbour, coordinate, map ->
+        Map.fetch!(map, neighbour) == Map.fetch!(map, coordinate) + 1
+      end
+    )
   end
 
   def score(map) do
@@ -172,33 +177,5 @@ defmodule AdventOfCode2024.Day10 do
       |> length()
     end)
     |> Enum.sum()
-  end
-
-  defp dfs([], _map, trails), do: trails
-
-  defp dfs([{location, path} | rest], map, trails) do
-    location_height = Map.fetch!(map, location)
-
-    if location_height == 9 do
-      dfs(rest, map, [Enum.reverse([location | path]) | trails])
-    else
-      target_height = location_height + 1
-
-      new_trails =
-        for loc <- next_locations(location, target_height, map), do: {loc, [location | path]}
-
-      dfs(new_trails ++ rest, map, trails)
-    end
-  end
-
-  defp next_locations({x, y}, height, map) do
-    [
-      {x, y + 1},
-      {x, y - 1},
-      {x - 1, y},
-      {x + 1, y}
-    ]
-    |> Enum.filter(&Map.has_key?(map, &1))
-    |> Enum.filter(&(Map.fetch!(map, &1) == height))
   end
 end
