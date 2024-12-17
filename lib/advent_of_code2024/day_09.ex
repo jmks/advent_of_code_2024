@@ -53,15 +53,38 @@ defmodule AdventOfCode2024.Day09 do
 
   Compact the amphipod's hard drive using the process he requested. What is the resulting filesystem checksum? (Be careful copy/pasting the input for this puzzle; it is a single, very long line.)
 
+  --- Part Two ---
+
+  Upon completion, two things immediately become clear. First, the disk definitely has a lot more contiguous free space, just like the amphipod hoped. Second, the computer is running much more slowly! Maybe introducing all of that file system fragmentation was a bad idea?
+
+  The eager amphipod already has a new plan: rather than move individual blocks, he'd like to try compacting the files on his disk by moving whole files instead.
+
+  This time, attempt to move whole files to the leftmost span of free space blocks that could fit the file. Attempt to move each file exactly once in order of decreasing file ID number starting with the file with the highest file ID number. If there is no span of free space to the left of a file that is large enough to fit the file, the file does not move.
+
+  The first example from above now proceeds differently:
+
+  00...111...2...333.44.5555.6666.777.888899
+  0099.111...2...333.44.5555.6666.777.8888..
+  0099.1117772...333.44.5555.6666.....8888..
+  0099.111777244.333....5555.6666.....8888..
+  00992111777.44.333....5555.6666.....8888..
+
+  The process of updating the filesystem checksum is the same; now, this example's checksum would be 2858.
+
+  Start over, now compacting the amphipod's hard drive using this new method instead. What is the resulting filesystem checksum?
   """
   def part1 do
     Inputs.binary(9)
     |> parse()
-    |> compact()
+    |> compact(:block)
     |> checksum()
   end
 
   def part2 do
+    Inputs.binary(9)
+    |> parse()
+    |> compact(:file)
+    |> checksum()
   end
 
   def parse(disk_map) do
@@ -80,12 +103,21 @@ defmodule AdventOfCode2024.Day09 do
     do_parse(rest, :file, file_no, [{:free, String.to_integer(free)} | disk])
   end
 
-  def compact(disk) do
+  def compact(disk, :block) do
     array = to_array(disk)
 
     array
-    |> do_compact(next_free(array, 0), :array.size(array) - 1)
+    |> compact_blocks(next_free(array, 0), :array.size(array) - 1)
     |> from_array()
+  end
+
+  def compact(disk, :file) do
+    files_to_move =
+      disk
+      |> Enum.filter(&match?({:file, _, _}, &1))
+      |> Enum.reverse()
+
+    compact_files(files_to_move, disk)
   end
 
   defp to_array(disk) do
@@ -119,13 +151,72 @@ defmodule AdventOfCode2024.Day09 do
     end)
   end
 
-  defp do_compact(array, free, index) when free >= index, do: array
+  defp compact_files([], disk), do: disk
 
-  defp do_compact(array, free, index) do
+  defp compact_files([{:file, id, blocks} | rest], disk) do
+    # Uncomment for a "trace" of changes
+    # print_disk(disk)
+
+    spot =
+      Enum.find_index(disk, fn
+        {:free, space} when space >= blocks -> true
+        _ -> false
+      end)
+
+    index = Enum.find_index(disk, &match?({:file, ^id, _}, &1))
+
+    if is_integer(spot) and spot < index do
+      new_disk =
+        disk
+        |> delete_file(id)
+        |> put_file(spot, {:file, id, blocks})
+
+      compact_files(rest, new_disk)
+    else
+      compact_files(rest, disk)
+    end
+  end
+
+  # defp print_disk(disk) do
+  #   disk
+  #   |> Enum.map(fn
+  #     {:file, id, blocks} -> List.duplicate(to_string(id), blocks)
+  #     {:free, space} -> List.duplicate(".", space)
+  #   end)
+  #   |> IO.puts()
+  # end
+
+  defp put_file([{:free, space} | rest], 0, {:file, id, blocks}) do
+    [{:free, 0}, {:file, id, blocks}, {:free, space - blocks} | rest]
+  end
+
+  defp put_file([thing | rest], index, file) do
+    [thing | put_file(rest, index - 1, file)]
+  end
+
+  defp delete_file([{:file, id, blocks}, {:free, space} | rest], id) do
+    [{:free, space + blocks} | rest]
+  end
+
+  defp delete_file([{:free, space_1}, {:file, id, blocks}, {:free, space_2} | rest], id) do
+    [{:free, space_1 + blocks + space_2} | rest]
+  end
+
+  defp delete_file([{:free, space}, {:file, id, blocks}], id) do
+    [{:free, space + blocks}]
+  end
+
+  defp delete_file([thing | rest], id) do
+    [thing | delete_file(rest, id)]
+  end
+
+  defp compact_blocks(array, free, index) when free >= index, do: array
+
+  defp compact_blocks(array, free, index) do
     array = :array.set(free, :array.get(index, array), array)
     array = :array.set(index, :undefined, array)
 
-    do_compact(array, next_free(array, free + 1), next_block(array, index - 1))
+    compact_blocks(array, next_free(array, free + 1), next_block(array, index - 1))
   end
 
   defp next_free(array, index) do
