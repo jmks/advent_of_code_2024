@@ -1,4 +1,10 @@
 defmodule Inputs do
+  def binary(day) do
+    day
+    |> path()
+    |> File.read!()
+  end
+
   def lines(day, :binary) when is_integer(day) do
     read(day)
     |> Enum.into([])
@@ -12,9 +18,14 @@ defmodule Inputs do
   end
 
   defp read(day) do
-    Path.join(["lib/inputs", filename_day(day)])
+    day
+    |> path()
     |> File.stream!(:line)
     |> Stream.map(&String.trim/1)
+  end
+
+  defp path(day) do
+    Path.join(["lib/inputs", filename_day(day)])
   end
 
   defp filename_day(day) when is_integer(day) do
