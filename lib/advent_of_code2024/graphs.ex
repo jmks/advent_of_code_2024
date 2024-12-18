@@ -1,9 +1,31 @@
 defmodule AdventOfCode2024.Graphs do
   # TODO: implicit direction of movement to up, down, left, right
+  def connected(map, start, neighbour_fun) do
+    nodes = MapSet.new([start])
+
+    do_connected(map, neighbour_fun, nodes)
+  end
+
+  # TODO: implicit direction of movement to up, down, left, right
   def dfs(map, start, done_fun, neighbour_fun) do
     frontier = [{start, []}]
 
     dfs(frontier, map, done_fun, neighbour_fun, [])
+  end
+
+  defp do_connected(map, neighbour_fun, visited) do
+    newly_visited =
+      visited
+      |> Enum.flat_map(&neighbours(&1, map))
+      |> Enum.reject(&MapSet.member?(visited, &1))
+      |> Enum.filter(neighbour_fun)
+      |> MapSet.new()
+
+    if MapSet.size(newly_visited) == 0 do
+      visited
+    else
+      do_connected(map, neighbour_fun, MapSet.union(visited, newly_visited))
+    end
   end
 
   defp dfs(frontier, map, done_fun, neighbour_fun, complete_paths)
