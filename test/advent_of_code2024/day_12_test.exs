@@ -25,6 +25,25 @@ defmodule AdventOfCode2024.Day12Test do
           """
           |> String.split("\n", trim: true)
 
+  @e_shape """
+           EEEEE
+           EXXXX
+           EEEEE
+           EXXXX
+           EEEEE
+           """
+           |> String.split("\n", trim: true)
+
+  @inner """
+         AAAAAA
+         AAABBA
+         AAABBA
+         ABBAAA
+         ABBAAA
+         AAAAAA
+         """
+         |> String.split("\n", trim: true)
+
   describe "parse/1" do
     test "small" do
       parsed = parse(@small)
@@ -54,19 +73,60 @@ defmodule AdventOfCode2024.Day12Test do
     end
   end
 
+  describe "outer_edges/1" do
+    test "prefers top and right directions" do
+      assert outer_edges({0, 0}) == [
+               {0, 0, :top, {0, 0}},
+               {1, 0, :top, {0, 0}},
+               {0, 0, :right, {0, 0}},
+               {0, -1, :right, {0, 0}}
+             ]
+    end
+  end
+
   describe "group_dimensions/1" do
-    test "small" do
-      assert group_dimension(MapSet.new([{0, 0}, {0, 1}, {0, 2}, {0, 3}])) == {4, 10}
-      assert group_dimension(MapSet.new([{1, 0}, {1, 1}, {2, 0}, {2, 1}])) == {4, 8}
-      assert group_dimension(MapSet.new([{1, 2}, {2, 2}, {2, 3}, {3, 3}])) == {4, 10}
-      assert group_dimension(MapSet.new([{1, 3}])) == {1, 4}
-      assert group_dimension(MapSet.new([{3, 0}, {3, 1}, {3, 2}])) == {3, 8}
+    test "small A" do
+      assert group_dimension(MapSet.new([{0, 0}, {0, 1}, {0, 2}, {0, 3}])) == {4, 10, 4}
+    end
+
+    test "small B" do
+      assert group_dimension(MapSet.new([{1, 0}, {1, 1}, {2, 0}, {2, 1}])) == {4, 8, 4}
+    end
+
+    test "small C" do
+      assert group_dimension(MapSet.new([{1, 2}, {2, 2}, {2, 3}, {3, 3}])) == {4, 10, 8}
+    end
+
+    test "small D" do
+      assert group_dimension(MapSet.new([{1, 3}])) == {1, 4, 4}
+    end
+
+    test "small E" do
+      assert group_dimension(MapSet.new([{3, 0}, {3, 1}, {3, 2}])) == {3, 8, 4}
     end
   end
 
   describe "total_price/1" do
     test "larger" do
-        assert total_price(@larger) == 1930
+      assert total_price(@larger) == 1930
+    end
+  end
+
+  describe "discount_price/1" do
+    test "small" do
+      assert discount_price(@small) == 80
+    end
+
+    test "e" do
+      assert discount_price(@e_shape) == 236
+    end
+
+    test "larger" do
+      assert discount_price(@larger) == 1206
+    end
+
+    test "inner" do
+      assert discount_price(@inner) == 368
     end
   end
 end
