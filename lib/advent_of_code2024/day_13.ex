@@ -50,6 +50,31 @@ defmodule AdventOfCode2024.Day13 do
 
   Figure out how to win as many prizes as possible. What is the fewest tokens you would have to spend to win all possible prizes?
 
+  --- Part Two ---
+
+  As you go to win the first prize, you discover that the claw is nowhere near where you expected it would be. Due to a unit conversion error in your measurements, the position of every prize is actually 10000000000000 higher on both the X and Y axis!
+
+  Add 10000000000000 to the X and Y position of every prize. After making this change, the example above would now look like this:
+
+  Button A: X+94, Y+34
+  Button B: X+22, Y+67
+  Prize: X=10000000008400, Y=10000000005400
+
+  Button A: X+26, Y+66
+  Button B: X+67, Y+21
+  Prize: X=10000000012748, Y=10000000012176
+
+  Button A: X+17, Y+86
+  Button B: X+84, Y+37
+  Prize: X=10000000007870, Y=10000000006450
+
+  Button A: X+69, Y+23
+  Button B: X+27, Y+71
+  Prize: X=10000000018641, Y=10000000010279
+
+  Now, it is only possible to win a prize on the second and fourth claw machines. Unfortunately, it will take many more than 100 presses to do so.
+
+  Using the corrected prize coordinates, figure out how to win as many prizes as possible. What is the fewest tokens you would have to spend to win all possible prizes?
   """
   def part1 do
     Inputs.binary(13)
@@ -62,7 +87,17 @@ defmodule AdventOfCode2024.Day13 do
     |> Enum.sum()
   end
 
+  # 22431798650267484 too high
+  # 83341936921125 too high
   def part2 do
+    Inputs.binary(13)
+    |> parse()
+    |> Enum.map(&big_winner/1)
+    |> Enum.map(fn
+      :lose -> 0
+      {:win, _, _, cost} -> cost
+    end)
+    |> Enum.sum()
   end
 
   def parse(input) do
@@ -109,6 +144,26 @@ defmodule AdventOfCode2024.Day13 do
       {a, b} = Enum.min_by(presses, fn {a, b} -> 3 * a + b end)
 
       {:win, a, b, 3 * a + b}
+    end
+  end
+
+  def big_winner(game) do
+    {{:a, {ax, ay}}, {:b, {bx, by}}, {:prize, {px, py}}} = game
+
+    extra = 10_000_000_000_000
+    px = px + extra
+    py = py + extra
+
+    b_numer = ax * py - ay * px
+    b_denom = ax * by - ay * bx
+
+    if rem(b_numer, b_denom) == 0 do
+      b = div(b_numer, b_denom)
+      a = div(px - bx * b, ax)
+
+      {:win, a, b, 3 * a + b}
+    else
+      :lose
     end
   end
 
