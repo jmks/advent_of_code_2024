@@ -56,4 +56,18 @@ defmodule AdventOfCode2024.Day14Test do
       assert safety_factor(parse(@example), {11, 7}, 100) == 12
     end
   end
+
+  describe "symmetrical?/2" do
+    test "small squares" do
+      assert symmetrical?([{{:pos, 0, 0}, {}}, {{:pos, 4, 0}, {}}], {5, 5})
+    end
+
+    test ""
+  end
+
+  describe "steps_to_xmas_tree/2" do
+    test "example" do
+      assert steps_to_xmas_tree(parse(@example), {11, 7}) == 78
+    end
+  end
 end

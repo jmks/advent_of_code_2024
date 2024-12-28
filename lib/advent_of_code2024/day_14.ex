@@ -120,6 +120,12 @@ defmodule AdventOfCode2024.Day14 do
   In this example, the quadrants contain 1, 3, 4, and 1 robot. Multiplying these together gives a total safety factor of 12.
 
   Predict the motion of the robots in your list within a space which is 101 tiles wide and 103 tiles tall. What will the safety factor be after exactly 100 seconds have elapsed?
+
+  --- Part Two ---
+
+  During the bathroom break, someone notices that these robots seem awfully similar to ones built and used at the North Pole. If they're the same type of robots, they should have a hard-coded Easter egg: very rarely, most of the robots should arrange themselves into a picture of a Christmas tree.
+
+  What is the fewest number of seconds that must elapse for the robots to display the Easter egg?
   """
   def part1 do
     Inputs.lines(14, :binary)
@@ -149,9 +155,7 @@ defmodule AdventOfCode2024.Day14 do
 
   def safety_factor(robots, grid_size, 0) do
     robots
-    |> Enum.map(&quadrant(&1, grid_size))
-    |> Enum.frequencies()
-    |> Map.delete(nil)
+    |> quadrant_counts(grid_size)
     |> Map.values()
     |> Enum.reduce(&Kernel.*/2)
   end
@@ -160,6 +164,13 @@ defmodule AdventOfCode2024.Day14 do
     robots
     |> Enum.map(&step(&1, grid_size))
     |> safety_factor(grid_size, steps - 1)
+  end
+
+  def quadrant_counts(robots, grid_size) do
+    robots
+    |> Enum.map(&quadrant(&1, grid_size))
+    |> Enum.frequencies()
+    |> Map.delete(nil)
   end
 
   def quadrant({{:pos, x, y}, _vel}, {width, height}) do
@@ -173,22 +184,64 @@ defmodule AdventOfCode2024.Day14 do
     end
   end
 
-  defp visualize(robots, {width, height}) do
-    IO.puts("Robot Locations:")
+  # Assume bilateral symmetry
+  def steps_to_xmas_tree(robots, grid_size) do
+    do_steps(robots, grid_size, 0)
+  end
+
+  def visualize(robots, {width, height}) do
     counts =
       robots
       |> Enum.map(fn {{:pos, x, y}, _vel} -> {x, y} end)
       |> Enum.frequencies()
 
     for y <- 0..(height - 1) do
-      row = for x <- 0..(width - 1) do
-        Map.get(counts, {x, y}, ".")
-      end |> Enum.join("")
+      row =
+        for x <- 0..(width - 1) do
+          Map.get(counts, {x, y}, ".")
+        end
+        |> Enum.join("")
 
       IO.puts(row)
     end
 
     robots
+  end
+
+  defp do_steps(robots, grid_size, step) do
+    if rem(step, 1_000_000) == 0 do
+      IO.puts(step)
+    end
+
+    if symmetrical?(robots, grid_size) do
+      IO.puts("Is this a tree?")
+      visualize(robots, grid_size)
+      step
+    else
+      robots
+      |> Enum.map(&step(&1, grid_size))
+      |> do_steps(grid_size, step + 1)
+    end
+  end
+
+  # try vertically
+  def symmetrical?(robots, {width, height}) do
+    map =
+      robots
+      |> Enum.map(fn {{:pos, x, y}, _velocity} -> {x, y} end)
+      |> Enum.frequencies()
+
+    columns =
+      for x <- 0..(width - 1) do
+        for y <- 0..(height - 1) do
+          Map.get(map, {x, y}, 0)
+        end
+      end
+
+    left = columns |> Enum.take(div(width, 2))
+    right = columns |> Enum.drop(div(width, 2) + 1) |> Enum.reverse()
+
+    left == right
   end
 
   defp integer_compare(a, b) when a < b, do: :lt
